@@ -1,4 +1,3 @@
-<img  align="left" src="/docs/images/aws_servicebroker_logo.png" width="300">
 
 # AWS Service Broker 1.0 - An AppDev Intiative
 
@@ -26,15 +25,11 @@ AWS Service broker implementation of OSB API specification solves the problem by
 
 AWS has 100s for services for customer to use. Customers are having brokers for every AWS resource like Amazon S3, Amazon RDS, Amazon DynamoDB and many more. Problem with having brokers for every AWS service is maintaining multiple codebases which can be cumbersome and new feature added requires code changes in the broker. So instead of having service broker for each AWS resources we can have a generic broker which can take CloudFormation as input and provision the AWS resources accordingly. CloudFormation can be constructed from the client and sent to service broker which eliminates having multiple brokers. CloudFormation helps to provision AWS service asynchronously and the exported stack output can be returned to the client in bind operation.  Customers will have flexibility to generate service catalog at client side rather than server side.
 
-![Components](/docs/images/components.png)
+![Components](docs/images/components.png)
 
 
 
 *   [Illustrates component flow of the platforms and various actors.]   *
-
-
-![Architecture](/docs/images/architecture.png)
-*   [Illustrates how application platforms can use the broker to provision and bind to AWS services.]   *
 
 ## Installation
 
