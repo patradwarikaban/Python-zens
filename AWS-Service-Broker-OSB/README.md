@@ -34,12 +34,12 @@ AWS has 100s for services for customer to use. Customers are having brokers for 
 
 ## Installation
 
-* [Prerequisites](/docs/install_prereqs.md)
-* [Installation on on-Premises](/docs/getting-started-onpremised.md)
-* [Installation on OpenShift](/docs/getting-started-openshift.md)
-* [Installation on Pivotal Cloud Foundry](/docs/getting-started-pcf.md)
-* [Installation on Kubernetes](/docs/getting-started-k8s.md)
-* [Installation on SAP Cloud Platform](/docs/getting-started-scp.md)
+* [Prerequisites](docs/install_prereqs.md)
+* [Installation on on-Premises](docs/getting-started-onpremised.md)
+* [Installation on OpenShift](docs/getting-started-openshift.md)
+* [Installation on Pivotal Cloud Foundry](docs/getting-started-pcf.md)
+* [Installation on Kubernetes](docs/getting-started-k8s.md)
+* [Installation on SAP Cloud Platform](docs/getting-started-scp.md)
 
 ## Service Operations - Provisioning , Update and binding services
 
