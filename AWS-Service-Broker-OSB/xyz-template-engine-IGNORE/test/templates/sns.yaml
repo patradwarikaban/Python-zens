@@ -1,0 +1,188 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS Service Broker - Amazon SNS (qs-1nt0fs93c)
+Metadata:
+  'AWS::ServiceBroker::Specification':
+    name: aws-sns
+    id: da215789-68be-4916-a0ab-489420161d654
+    description: AWS SNSTopic plan
+    tags:
+      - AWS
+      - SNS
+    displayName: Amazon S3
+    imageUrl: Dummy
+    longDescription: An Amazon S3 bucket
+    providerDisplayName: AWS
+    documentationUrl: https://aws.amazon.com/sns/
+    supportUrl: https://aws.amazon.com/contact-us/
+    dashboard_client: https://mydashboard-client
+    plans:
+      SNS_Standard_Plan:
+        id: ab439673-d94a-4dde-a131-1fe866ff529f
+        name: SNS_Standard_Plan
+        description: AWS SNS Service for notification
+        metadata:
+          displayname: AWS-SNS Test
+          bullets:
+            - AWS SNSTopic
+            - US Standard region
+          costs:
+            - amount:
+                usd: 0.5000
+              unit: GB per Month
+          imageurl: Dummy
+          bindable: true
+          planupdateable: true
+    bindable: true
+    planupdateable: true
+    ParameterValues:
+        ExistingTopicArn: ''
+        CreateTopic: 'Yes'
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: SNS Configuration
+      Parameters:
+      - SubscriptionEndPoint
+      - SubscriptionProtocol
+      - CreateTopic
+      - ExistingTopicArn
+    ParameterLabels:
+      SubscriptionEndPoint:
+        default: Subscription EndPoint
+      SubscriptionProtocol:
+        default: Subscription Protocol
+      CreateTopic:
+        default: Create Topic
+      ExistingTopicArn:
+        default: Existing Topic ARN
+Parameters:
+  SubscriptionEndPoint:
+    Type: String
+    Description: The endpoint that receives notifications from the Amazon SNS topic.
+      If left blank no subscription will be added to the topic. The endpoint value
+      depends on the protocol that you specify. This could be a URL, ARN or SMS-capable
+      telephone number.
+    Default: ''
+  SubscriptionProtocol:
+    Type: String
+    Description: 'The subscription''s protocol. Examples: "http", "https", "email",
+      "email-json", "sms", "sqs", "application", "lambda".'
+    Default: sqs
+    AllowedValues:
+    - ''
+    - http
+    - https
+    - email
+    - email-json
+    - sms
+    - sqs
+    - application
+    - lambda
+  CreateTopic:
+    Type: String
+    Description: Should we create a topic or not ?
+    AllowedValues:
+    - 'Yes'
+    - 'No'
+    Default: 'Yes'
+  ExistingTopicArn:
+    Type: String
+    Description: If not creating a topic, define the arn for an existing topic
+    Default: ''
+Conditions:
+  AddSub:
+    !Not
+    - !Equals
+      - !Ref SubscriptionEndPoint
+      - ''
+  AddTopic:
+    !Equals
+    - !Ref CreateTopic
+    - 'Yes'
+Resources:
+  SNSTopic:
+    Condition: AddTopic
+    Type: AWS::SNS::Topic
+  SNSSubscription:
+    Condition: AddSub
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref SubscriptionEndPoint
+      Protocol: !Ref SubscriptionProtocol
+      TopicArn:
+        !If
+        - AddTopic
+        - !Ref SNSTopic
+        - !Ref ExistingTopicArn
+  AWSSBInjectedIAMUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: iam_user_creation
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - iam:CreateAccessKey
+            - iam:PutUserPolicy
+            - iam:ListAttachedUserPolicies
+            - iam:DeleteUserPolicy
+            - iam:AttachUserPolicy
+            - iam:DeleteUser
+            - iam:ListUserPolicies
+            - iam:DetachUserPolicy
+            - iam:CreateUser
+            - iam:DeleteAccessKey
+            - iam:ListAccessKeys
+            - ssm:DeleteParameters
+            - ssm:PutParameter
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: '*'
+  AWSSBInjectedIAMUser:
+    Type: AWS::IAM::User
+  AWSSBInjectedIAMUserPolicy1:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AWSSBInjectedIAMUserPolicy1
+      Users:
+      - !Ref AWSSBInjectedIAMUser
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource: '*'
+          Action:
+          - sns:Unsubscribe
+          - sns:ListSubscriptionsByTopic
+          - sns:GetSubscriptionAttributes
+          - sns:SetSubscriptionAttributes
+        - Effect: Allow
+          Resource:
+            !If
+            - AddTopic
+            - !Ref SNSTopic
+            - !Ref ExistingTopicArn
+          Action:
+          - sns:Publish
+          - sns:Subscribe
+Outputs:
+  TopicARN:
+    Description: ARN of SNS Topic
+    Value:
+      !If
+      - AddTopic
+      - !Ref SNSTopic
+      - !Ref ExistingTopicArn

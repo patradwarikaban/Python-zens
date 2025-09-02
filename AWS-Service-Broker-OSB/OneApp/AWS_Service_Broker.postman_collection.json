@@ -1,0 +1,196 @@
+{
+	"info": {
+		"_postman_id": "c9c30848-b3c7-42a3-8ba8-911864d615e0",
+		"name": "AWS Service Broker 1.0",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "22396576"
+	},
+	"item": [
+		{
+			"name": "CATALOG",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Broker-API-Version",
+						"value": "2.13",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:5000/v2/catalog",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"v2",
+						"catalog"
+					],
+					"query": [
+						{
+							"key": "X-Broker-API-Version",
+							"value": "2.13",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PROVISION",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "X-Broker-API-Version",
+						"value": "2.13",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "    {\"service_id\": \"test\",\n    \"plan_id\": \"aws_s3\",\n    \"organization_guid\": \"organization_guid\",\n    \"space_guid\": \"space_guid\",\n    \"parameters\" : {}\n    }"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/v2/service_instances/abcdef123456",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"v2",
+						"service_instances",
+						"abcdef123456"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DEPROVISION",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "X-Broker-API-Version",
+						"value": "2.13",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:5000/v2/service_instances/abcdef123456?service_id=test&plan_id=aws_s3",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"v2",
+						"service_instances",
+						"abcdef123456"
+					],
+					"query": [
+						{
+							"key": "service_id",
+							"value": "test"
+						},
+						{
+							"key": "plan_id",
+							"value": "aws_s3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "LASTOPERATION",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Broker-API-Version",
+						"value": "2.13",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:5000/v2/service_instances/abcdef123456/last_operation",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"v2",
+						"service_instances",
+						"abcdef123456",
+						"last_operation"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "BIND",
+			"request": {
+				"method": "PUT",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "UNBIND",
+			"request": {
+				"method": "DELETE",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "UPDATE",
+			"request": {
+				"method": "PATCH",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "FETCHSERVICEINSTANCEDETAILS",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "CHECKORPHAN-Internal",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}

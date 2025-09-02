@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS Service Broker - Amazon S3'
+Metadata:
+  'AWS::ServiceBroker::Specification':
+    name: aws-s3
+    id: da215457-67ce-4916-b0ab-47420161d654
+    description: AWS Service Broker S3 plan
+    tags:
+      - AWS
+      - S3
+      - Object Storage
+    displayName: Amazon S3
+    imageUrl: Dummy
+    longDescription: An Amazon S3 bucket
+    providerDisplayName: AWS
+    documentationUrl: https://aws.amazon.com/s3/
+    supportUrl: https://aws.amazon.com/contact-us/
+    dashboard_client: https://mydashboard-client
+    plans:
+      S3_Standard_Plan2:
+        id: ab439675-d85b-4dde-a131-5fe860ff529f
+        name: S3_Standaetaind_Plan2
+        description: S3 Bucket
+        metadata:
+          displayname: AWS-S3-Plan2
+          bullets:
+            - AWS S3 Bucket
+            - US Standard region
+          costs:
+            - amount:
+                usd: 0.2000
+              unit: GB per Month
+          imageurl: Dummy
+          bindable: true
+          planupdateable: false
+    bindable: true
+    planupdateable: true
+    ParameterValues:
+      BucketName: "Auto"
+      LoggingPrefix: S3AccessLogs-plan2
+      # TODO: add glacier lifecycle for previous versions
+      EnableGlacierLifeCycle: "False"
+      GlacierLifeCycleTransitionInDays: "30"
+      LifeCyclePrefix: Archive
+      EnableVersioning: "True"
+      BucketAccessControl: Private
+      EnableLogging: "True"
+      PreventDeletion: "True"  
+  
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: "S3 Bucket Settings"
+        Parameters:
+          - BucketName
+          - LoggingPrefix
+          - EnableLogging
+          - EnableGlacierLifeCycle
+          - GlacierLifeCycleTransitionInDays
+          - EnableVersioning
+          - LifeCyclePrefix
+          - BucketAccessControl
+          - PreventDeletion
+    ParameterLabels:
+      BucketAccessControl:
+        default: "Bucket Access Control"
+      LifeCyclePrefix:
+        default: "LifeCycle Prefix"
+      EnableVersioning:
+        default: "Enable Versioning"
+      GlacierLifeCycleTransitionInDays:
+        default: "Glacier LifeCycle Transition In Days"
+      EnableGlacierLifeCycle:
+        default: "Enable Glacier LifeCycle"
+      EnableLogging:
+        default: "Enable Logging"
+      LoggingPrefix:
+        default: "Logging Prefix"
+      PreventDeletion:
+        default: "Prevent Deletion"
+Parameters:
+  BucketName:
+    Description: >-
+      Must contain only lowercase letters, numbers, periods (.), and hyphens. If set to Auto, a bucket name will be generated
+      (-),Cannot end in numbers
+    Type: String
+  LoggingPrefix:
+    Description: >-
+      Must contain only lowercase letters, numbers, periods (.), and hyphens
+      (-),Cannot end in numbers
+    Type: String
+    Default: Archive
+  EnableLogging:
+    Description: enable or disable S3 logging
+    Type: String
+    AllowedValues:
+      - 'True'
+      - 'False'
+    Default: 'True'
+  EnableGlacierLifeCycle:
+    Description: enable archiving to Glacier Storage
+    Type: String
+    AllowedValues:
+      - 'True'
+      - 'False'
+    Default: 'False'
+  GlacierLifeCycleTransitionInDays:
+    Description: Define how many days objects should exist before being moved to Glacier
+    Type: String
+    Default: '0'
+  EnableVersioning:
+    Description: enable versioning
+    Type: String
+    AllowedValues:
+      - 'True'
+      - 'False'
+    Default: 'False'
+  LifeCyclePrefix:
+    Description: >-
+      Must contain only lowercase letters, numbers, periods (.), and hyphens
+      (-),Cannot end in numbers
+    Type: String
+    Default: Archive
+  BucketAccessControl:
+    Description: define if the bucket can be accessed from public or private locations
+    Type: String
+    AllowedValues:
+      - Private
+      - PublicRead
+      - PublicReadWrite
+      - AuthenticatedRead
+      - LogDeliveryWrite
+      - BucketOwnerRead
+      - BucketOwnerFullControl
+      - AwsExecRead
+    Default: "Private"
+  PreventDeletion:
+    Description: With the PreventDeletion attribute you can preserve a resource when its stack is deleted
+    Type: String
+    AllowedValues:
+      - 'True'
+      - 'False'
+    Default: "True"
+Conditions:
+  UseLogging: !Equals
+    - !Ref EnableLogging
+    - 'True'
+  UseGlacierLifeCycle: !Equals
+    - !Ref EnableGlacierLifeCycle
+    - 'True'
+  UseVersioning: !Equals
+    - !Ref EnableVersioning
+    - 'True'
+  RetainBucket: !Equals
+    - !Ref PreventDeletion
+    - "True"
+  DeleteBucket: !Equals
+    - !Ref PreventDeletion
+    - "False"
+Resources:
+  S3GeneralBucket:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      Properties:
+        BucketName: !Ref BucketName
+
+
+Outputs:
+    S3GeneralBucket:
+        Description: 'specific S3 Bucket'
+        Value: !Ref S3GeneralBucket

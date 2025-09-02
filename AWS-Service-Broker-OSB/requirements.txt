@@ -1,0 +1,12 @@
+boto3==1.14.51
+cachetools==5.2.0
+gevent==22.10.2
+oyaml==1.0
+pynamodb==6.0.1
+PyYAML==5.3.1
+requests==2.24.0
+zope.event==5.0
+zope.interface==6.0
+gevent>=1.5a2
+cfn-lint==0.38.0
+openbrokerapi==4.4.1

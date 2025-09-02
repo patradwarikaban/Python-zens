@@ -1,0 +1,250 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS Service Broker - Amazon SNS'
+Metadata:
+  'AWS::ServiceBroker::Specification':
+    name: aws-sns
+    id: ca215789-68be-4916-a0ab-489420161d654
+    description: AWS SNSTopic plan
+    tags:
+      - AWS
+      - SNS
+    displayName: Amazon S3
+    imageUrl: Dummy
+    longDescription: An Amazon S3 bucket
+    providerDisplayName: AWS
+    documentationUrl: https://aws.amazon.com/sns/
+    supportUrl: https://aws.amazon.com/contact-us/
+    dashboard_client: https://mydashboard-client
+    plans:
+      SNS_Standard_Plan:
+        id: ab439673-d94a-4dde-a131-1fe866ff529f
+        name: SNS_Standard_Plan
+        description: AWS SNS Service for notification
+        metadata:
+          displayname: AWS-SNS Test
+          bullets:
+            - AWS SNSTopic
+            - US Standard region
+          costs:
+            - amount:
+                usd: 0.5000
+              unit: GB per Month
+          imageurl: Dummy
+          bindable: true
+          planupdateable: true
+    bindable: true
+    planupdateable: true
+    ParameterValues:
+        ExistingTopicArn: ''
+        CreateTopic: 'Yes'
+      
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: SNS Configuration
+      Parameters:
+      - SubscriptionEndPoint
+      - SubscriptionProtocol
+      - CreateTopic
+      - ExistingTopicArn
+    ParameterLabels:
+      SubscriptionEndPoint:
+        default: Subscription EndPoint
+      SubscriptionProtocol:
+        default: Subscription Protocol
+      CreateTopic:
+        default: Create Topic
+      ExistingTopicArn:
+        default: Existing Topic ARN
+Parameters:
+  SubscriptionEndPoint:
+    Type: String
+    Description: The endpoint that receives notifications from the Amazon SNS topic.
+      If left blank no subscription will be added to the topic. The endpoint value
+      depends on the protocol that you specify. This could be a URL, ARN or SMS-capable
+      telephone number.
+    Default: ''
+  SubscriptionProtocol:
+    Type: String
+    Description: 'The subscription''s protocol. Examples: "http", "https", "email",
+      "email-json", "sms", "sqs", "application", "lambda".'
+    Default: sqs
+    AllowedValues:
+    - ''
+    - http
+    - https
+    - email
+    - email-json
+    - sms
+    - sqs
+    - application
+    - lambda
+  CreateTopic:
+    Type: String
+    Description: Should we create a topic or not ?
+    AllowedValues:
+    - 'Yes'
+    - 'No'
+    Default: 'Yes'
+  ExistingTopicArn:
+    Type: String
+    Description: If not creating a topic, define the arn for an existing topic
+    Default: ''
+Conditions:
+  AddSub:
+    !Not
+    - !Equals
+      - !Ref SubscriptionEndPoint
+      - ''
+  AddTopic:
+    !Equals
+    - !Ref CreateTopic
+    - 'Yes'
+Resources:
+  SNSTopic:
+    Condition: AddTopic
+    Type: AWS::SNS::Topic
+  SNSSubscription:
+    Condition: AddSub
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref SubscriptionEndPoint
+      Protocol: !Ref SubscriptionProtocol
+      TopicArn:
+        !If
+        - AddTopic
+        - !Ref SNSTopic
+        - !Ref ExistingTopicArn
+  AWSSBInjectedIAMUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: iam_user_creation
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - iam:CreateAccessKey
+            - iam:PutUserPolicy
+            - iam:ListAttachedUserPolicies
+            - iam:DeleteUserPolicy
+            - iam:AttachUserPolicy
+            - iam:DeleteUser
+            - iam:ListUserPolicies
+            - iam:DetachUserPolicy
+            - iam:CreateUser
+            - iam:DeleteAccessKey
+            - iam:ListAccessKeys
+            - ssm:DeleteParameters
+            - ssm:PutParameter
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: '*'
+  AWSSBInjectedIAMUserLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+        - AWSSBInjectedIAMUserRole
+        - Arn
+      Code:
+        ZipFile: |-
+          import cfnresponse
+          import random
+          import string
+          import boto3
+          import traceback
+
+          alnum = string.ascii_uppercase + string.ascii_lowercase + string.digits
+          iam_client = boto3.client('iam')
+          ssm_client = boto3.client('ssm')
+
+
+          def handler(event, context):
+              response_code = cfnresponse.SUCCESS
+              response_data = {}
+              if event['RequestType'] == 'Create':
+                  phys_id = ''.join(random.choice(alnum) for _ in range(16))
+              else:
+                  phys_id = event['PhysicalResourceId']
+              response_data['AsbAccessKeyId'] = 'AsbAccessKeyId-%s' % phys_id
+              response_data['AsbSecretAccessKey'] = 'AsbSecretAccessKey-%s' % phys_id
+              try:
+                  username = event['ResourceProperties']['Username']
+                  if event['RequestType'] == 'Create':
+                      response = iam_client.create_access_key(UserName=username)
+                      aws_access_key_id = response['AccessKey']['AccessKeyId']
+                      secret_access_key = response['AccessKey']['SecretAccessKey']
+                      ssm_client.put_parameter(Name=response_data['AsbAccessKeyId'], Value=aws_access_key_id, Type='SecureString')
+                      ssm_client.put_parameter(Name=response_data['AsbSecretAccessKey'], Value=secret_access_key, Type='SecureString')
+                  elif event['RequestType'] == 'Update':
+                      print('Update operation unsupported')
+                      response_code = cfnresponse.FAILED
+                  elif event['RequestType'] == 'Delete':
+                      for access_key in iam_client.list_access_keys(UserName=username)['AccessKeyMetadata']:
+                          iam_client.delete_access_key(UserName=username, AccessKeyId=access_key['AccessKeyId'])
+                      ssm_client.delete_parameters(Names=[response_data['AsbAccessKeyId'], response_data['AsbSecretAccessKey']])
+                  cfnresponse.send(event, context, response_code, response_data, phys_id)
+              except Exception as e:
+                  print(str(e))
+                  traceback.print_exc()
+                  cfnresponse.send(event, context, cfnresponse.FAILED, response_data, phys_id)
+      Runtime: python3.9
+      Timeout: '60'
+  AWSSBInjectedIAMUser:
+    Type: AWS::IAM::User
+  AWSSBInjectedIAMUserCreator:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt AWSSBInjectedIAMUserLambda.Arn
+      Username: !Ref AWSSBInjectedIAMUser
+  AWSSBInjectedIAMUserPolicy1:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AWSSBInjectedIAMUserPolicy1
+      Users:
+      - !Ref AWSSBInjectedIAMUser
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource: '*'
+          Action:
+          - sns:Unsubscribe
+          - sns:ListSubscriptionsByTopic
+          - sns:GetSubscriptionAttributes
+          - sns:SetSubscriptionAttributes
+        - Effect: Allow
+          Resource:
+            !If
+            - AddTopic
+            - !Ref SNSTopic
+            - !Ref ExistingTopicArn
+          Action:
+          - sns:Publish
+          - sns:Subscribe
+Outputs:
+  TopicARN:
+    Description: ARN of SNS Topic
+    Value:
+      !If
+      - AddTopic
+      - !Ref SNSTopic
+      - !Ref ExistingTopicArn
+  SnsAwsAccessKeyId:
+    Value: !Sub "ssm:${AWSSBInjectedIAMUserCreator.AsbAccessKeyId}"
+  SnsAwsSecretAccessKey:
+    Value: !Sub "ssm:${AWSSBInjectedIAMUserCreator.AsbSecretAccessKey}"

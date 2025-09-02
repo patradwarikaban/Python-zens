@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS Service Broker - Amazon S3'
+Metadata:
+  'AWS::ServiceBroker::Specification':
+    name: aws-s3
+    id: da215457-67ce-4916-b0ab-47420161d654
+    description: AWS Service Broker S3 plan
+    tags:
+      - AWS
+      - S3
+      - Object Storage
+    displayName: Amazon S3
+    imageUrl: Dummy
+    longDescription: An Amazon S3 bucket
+    providerDisplayName: AWS
+    documentationUrl: https://aws.amazon.com/s3/
+    supportUrl: https://aws.amazon.com/contact-us/
+    dashboard_client: https://mydashboard-client
+    plans:
+      S3_Standard_Plan1:
+        id: ab439664-d85b-4dde-a131-5fe860ff529f
+        name: S3_Standard_Plan1
+        description: S3 Bucket
+        metadata:
+          displayname: AWS-S3-Plan1
+          bullets:
+            - AWS S3 Bucket
+            - US Standard region
+          costs:
+            - amount:
+                usd: 0.2000
+              unit: GB per Month
+          imageurl: Dummy
+          bindable: true
+          planupdateable: true
+    bindable: true
+    planupdateable: true
+    ParameterValues:
+      BucketName: "Auto"
+      LoggingPrefix: S3AccessLogs-plan1
+      # TODO: add glacier lifecycle for previous versions
+      EnableGlacierLifeCycle: "False"
+      GlacierLifeCycleTransitionInDays: "30"
+      LifeCyclePrefix: Archive
+      EnableVersioning: "True"
+      BucketAccessControl: Private
+      EnableLogging: "True"
+  
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: "S3 Bucket Settings"
+        Parameters:
+          - BucketName
+          - LoggingPrefix
+          - EnableLogging
+          - EnableGlacierLifeCycle
+          - GlacierLifeCycleTransitionInDays
+          - EnableVersioning
+          - LifeCyclePrefix
+          - BucketAccessControl
+    ParameterLabels:
+      BucketName:
+        default: "dwarikapatra"
+      BucketAccessControl:
+        default: "Bucket Access Control"
+      LifeCyclePrefix:
+        default: "LifeCycle Prefix"
+      EnableVersioning:
+        default: "Enable Versioning"
+      GlacierLifeCycleTransitionInDays:
+        default: "Glacier LifeCycle Transition In Days"
+      EnableGlacierLifeCycle:
+        default: "Enable Glacier LifeCycle"
+      EnableLogging:
+        default: "Enable Logging"
+      LoggingPrefix:
+        default: "Logging Prefix"
+Parameters:
+  BucketName:
+    Description: The prefix to use for your S3 bucket
+    Type: String
+    Default: dwarikapatra
+    AllowedPattern: ^(?!(^xn--|.$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+    ConstraintDescription: Bucket name prefix can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+  LoggingPrefix:
+    Description: >-
+      Must contain only lowercase letters, numbers, periods (.), and hyphens
+      (-),Cannot end in numbers
+    Type: String
+    Default: Archive
+  EnableLogging:
+    Description: enable or disable S3 logging
+    Type: String
+    AllowedValues:
+      - 'True'
+      - 'False'
+    Default: 'True'
+  EnableGlacierLifeCycle:
+    Description: enable archiving to Glacier Storage
+    Type: String
+    AllowedValues:
+      - 'True'
+      - 'False'
+    Default: 'False'
+  GlacierLifeCycleTransitionInDays:
+    Description: Define how many days objects should exist before being moved to Glacier
+    Type: String
+    Default: '0'
+  EnableVersioning:
+    Description: enable versioning
+    Type: String
+    AllowedValues:
+      - 'True'
+      - 'False'
+    Default: 'False'
+  LifeCyclePrefix:
+    Description: >-
+      Must contain only lowercase letters, numbers, periods (.), and hyphens
+      (-),Cannot end in numbers
+    Type: String
+    Default: Archive
+  BucketAccessControl:
+    Description: define if the bucket can be accessed from public or private locations
+    Type: String
+    AllowedValues:
+      - Private
+      - PublicRead
+      - PublicReadWrite
+      - AuthenticatedRead
+      - LogDeliveryWrite
+      - BucketOwnerRead
+      - BucketOwnerFullControl
+      - AwsExecRead
+    Default: "Private"
+Resources:
+  DemoBucket:
+   Type: AWS::S3::Bucket
+   Properties:
+    BucketName: !Sub '${BucketName}-${AWS::Region}-${AWS::AccountId}'

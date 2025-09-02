@@ -1,0 +1,17 @@
+Parameters:
+  BucketName:
+    Description: The name of the bucket to be provisioned
+    Default: hello-bucket
+    Type: String
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: ^[a-z0-9][a-z0-9\-\.]+[a-z0-9]$
+Resources:
+  HelloBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+Outputs:
+  BucketNameOut:
+    Description: The bucket name after all is said and done
+    Value: !Ref HelloBucket
