@@ -1,5 +1,5 @@
 
-## AWS Service Broker - A Python implementation of [Open Service Broker API Specification](https://www.openservicebrokerapi.org/)
+## AWS Service Broker - A Python implementation of [Open Service Broker API](https://www.openservicebrokerapi.org/) specification
 
 This solution is an open-source project which allows native AWS services to be exposed directly to the end users, applications hosted on-premises and to third party application platforms. It provides easy and standard way to avail AWS services directly within the application platform. 
 
